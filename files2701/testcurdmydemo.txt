@@ -1,0 +1,411 @@
+now add a curd application for my personal details of persons which includes all possible data types and springboot all possible scenarious with curd in real world application so give me code of each and explain in detail with annotation and if not there that annotation and labok if we use it looks like . now my code is below not any directory created give me paths of files also - package com.testexample.myexample;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class MyexampleApplication {
+	
+	public static void main(String[] args) {
+		SpringApplication.run(MyexampleApplication.class, args);
+	}
+
+}
+
+Perfect! Since you want a full Spring Boot CRUD application for managing personal details with all possible data types, real-world scenarios, and explanations including annotations and Lombok usage, I’ll structure it step by step, including the file paths, so you can directly create it in your project.
+
+We’ll use Spring Boot 3.x, Spring Data JPA, H2/MySQL database, Lombok, and REST APIs for CRUD operations.
+
+Project Structure
+myexample/
+├── src/main/java/com/testexample/myexample/
+│   ├── MyexampleApplication.java
+│   ├── controller/
+│   │   └── PersonController.java
+│   ├── entity/
+│   │   └── Person.java
+│   ├── repository/
+│   │   └── PersonRepository.java
+│   └── service/
+│       └── PersonService.java
+├── src/main/resources/
+│   ├── application.properties
+│   └── data.sql (optional initial data)
+└── pom.xml
+
+Step 1: pom.xml
+
+Include necessary dependencies:
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" ...>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.testexample</groupId>
+    <artifactId>myexample</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.0</version>
+        <relativePath/>
+    </parent>
+
+    <dependencies>
+        <!-- Spring Boot Starter Web -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Spring Boot Starter JPA -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- MySQL Connector (or H2 for testing) -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.30</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Validation -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- Dev Tools -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+
+Step 2: application.properties
+
+Configure MySQL database connection:
+
+# MySQL database configuration
+spring.datasource.url=jdbc:mysql://localhost:3306/tasks_db?useSSL=false&serverTimezone=UTC
+spring.datasource.username=root
+spring.datasource.password=yourpassword
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA / Hibernate
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
+
+# Optional: Disable Thymeleaf template warning (if not using templates)
+spring.thymeleaf.check-template-location=false
+
+Step 3: Entity Class (Person.java)
+
+File path: src/main/java/com/testexample/myexample/entity/Person.java
+
+package com.testexample.myexample.entity;
+
+import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
+import lombok.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Entity
+@Table(name = "persons")
+@Data // Lombok: generates getters, setters, toString, equals, hashCode
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Person {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotBlank(message = "First name is required")
+    private String firstName;
+
+    @NotBlank(message = "Last name is required")
+    private String lastName;
+
+    @Min(0)
+    @Max(120)
+    private Integer age;
+
+    @Email
+    private String email;
+
+    @Past
+    private LocalDate dateOfBirth;
+
+    private LocalDateTime createdAt;
+
+    @ElementCollection
+    @CollectionTable(name = "person_phone_numbers", joinColumns = @JoinColumn(name = "person_id"))
+    @Column(name = "phone_number")
+    private List<String> phoneNumbers;
+
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
+
+    private Boolean active;
+
+    private Double salary;
+
+    private Float height;
+
+    private Long nationalId;
+
+    private Byte[] profilePicture;
+
+    public enum Gender {
+        MALE, FEMALE, OTHER
+    }
+
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+    }
+}
+
+
+Explanation:
+
+@Entity → Maps the class to a database table.
+
+@Table(name = "persons") → Optional, custom table name.
+
+@Id + @GeneratedValue → Primary key with auto-increment.
+
+@NotBlank, @Email, @Min, @Max → Validation annotations.
+
+@ElementCollection → Maps a collection of simple types (like phone numbers) to a separate table.
+
+@Enumerated → Enum stored as string in DB.
+
+@PrePersist → Automatically set createdAt when the record is created.
+
+Lombok (@Data, @Builder) → Reduces boilerplate.
+
+Step 4: Repository (PersonRepository.java)
+
+File path: src/main/java/com/testexample/myexample/repository/PersonRepository.java
+
+package com.testexample.myexample.repository;
+
+import com.testexample.myexample.entity.Person;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface PersonRepository extends JpaRepository<Person, Long> {
+    List<Person> findByFirstNameContainingIgnoreCase(String firstName);
+    List<Person> findByActiveTrue();
+}
+
+
+Explanation:
+
+Extending JpaRepository gives you CRUD + pagination + sorting automatically.
+
+Custom queries like findByFirstNameContainingIgnoreCase are auto-implemented by Spring Data JPA.
+
+Step 5: Service Layer (PersonService.java)
+
+File path: src/main/java/com/testexample/myexample/service/PersonService.java
+
+package com.testexample.myexample.service;
+
+import com.testexample.myexample.entity.Person;
+import com.testexample.myexample.repository.PersonRepository;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class PersonService {
+
+    private final PersonRepository repository;
+
+    public PersonService(PersonRepository repository) {
+        this.repository = repository;
+    }
+
+    public List<Person> getAllPersons() {
+        return repository.findAll();
+    }
+
+    public Optional<Person> getPersonById(Long id) {
+        return repository.findById(id);
+    }
+
+    public Person createPerson(Person person) {
+        return repository.save(person);
+    }
+
+    public Person updatePerson(Long id, Person personDetails) {
+        Person person = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Person not found"));
+        person.setFirstName(personDetails.getFirstName());
+        person.setLastName(personDetails.getLastName());
+        person.setAge(personDetails.getAge());
+        person.setEmail(personDetails.getEmail());
+        person.setDateOfBirth(personDetails.getDateOfBirth());
+        person.setActive(personDetails.getActive());
+        person.setSalary(personDetails.getSalary());
+        person.setHeight(personDetails.getHeight());
+        person.setNationalId(personDetails.getNationalId());
+        person.setGender(personDetails.getGender());
+        person.setPhoneNumbers(personDetails.getPhoneNumbers());
+        return repository.save(person);
+    }
+
+    public void deletePerson(Long id) {
+        repository.deleteById(id);
+    }
+}
+
+
+Explanation:
+
+Standard service layer for CRUD.
+
+Handles business logic and delegates DB operations to the repository.
+
+Step 6: Controller (PersonController.java)
+
+File path: src/main/java/com/testexample/myexample/controller/PersonController.java
+
+package com.testexample.myexample.controller;
+
+import com.testexample.myexample.entity.Person;
+import com.testexample.myexample.service.PersonService;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/persons")
+public class PersonController {
+
+    private final PersonService service;
+
+    public PersonController(PersonService service) {
+        this.service = service;
+    }
+
+    @GetMapping
+    public List<Person> getAllPersons() {
+        return service.getAllPersons();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Person> getPersonById(@PathVariable Long id) {
+        return service.getPersonById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping
+    public Person createPerson(@Valid @RequestBody Person person) {
+        return service.createPerson(person);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Person> updatePerson(@PathVariable Long id, @Valid @RequestBody Person person) {
+        return ResponseEntity.ok(service.updatePerson(id, person));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletePerson(@PathVariable Long id) {
+        service.deletePerson(id);
+        return ResponseEntity.noContent().build();
+    }
+}
+
+
+Explanation:
+
+@RestController → Exposes REST endpoints.
+
+@RequestMapping("/api/persons") → Base URL.
+
+@GetMapping, @PostMapping, @PutMapping, @DeleteMapping → Standard CRUD HTTP methods.
+
+@Valid → Validates input based on annotations in Person.
+
+✅ Optional: Seed Data (data.sql)
+
+File path: src/main/resources/data.sql
+
+INSERT INTO persons (first_name, last_name, age, email, date_of_birth, active, salary, height, national_id, gender)
+VALUES ('John', 'Doe', 30, 'john@example.com', '1996-01-01', true, 50000, 5.9, 123456789, 'MALE');
+
+Step 7: Run Your Application
+
+Start MySQL and create tasks_db.
+
+Run the Spring Boot application.
+
+Test APIs using Postman or curl:
+
+Method	URL	Body
+GET	/api/persons	-
+GET	/api/persons/1	-
+POST	/api/persons	JSON Person object
+PUT	/api/persons/1	JSON Person object
+DELETE	/api/persons/1	-
+
+This setup covers:
+
+All common data types: String, Integer, Boolean, Double, Float, Long, Byte[], LocalDate, LocalDateTime, Enum, List<String>.
+
+Real-world scenarios: Validation, collections, enums, CRUD, optional auto-generated timestamps.
+
+Spring Boot best practices: Controller → Service → Repository layers.
+
+Optional Lombok: Reduces boilerplate code.
+
+REST API endpoints ready for front-end integration.
+
+If you want, I can also add advanced scenarios:
+
+Pagination and sorting
+
+Searching by multiple fields
+
+Soft delete
+
+File upload (for profilePicture)
+
+This will make it production-ready CRUD for personal data.
