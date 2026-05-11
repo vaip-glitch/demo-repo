@@ -1,0 +1,2476 @@
+these are seperate sql simple queries i want more complecated  as per 2-3 year experience candidate get in product based companies interview, as cosidered you are interivewr go hard and complex which includes all combinations also and ask me 20 queries and laer on provide solution -SELECT * FROM  
+employees;
+Select All Records
+SELECT first_name, 
+last_name, salary FROM 
+employees;
+Specific Columns
+SELECT * FROM 
+employees WHERE 
+salary > 50000;
+WHERE Clause
+SELECT DISTINCT 
+department_id FROM 
+employees;
+DISTINCT Values
+SELECT * FROM 
+employees ORDER BY 
+salary DESC;
+ORDER BY
+SELECT * FROM 
+employees LIMIT 5;
+LIMIT Results
+SELECT * FROM 
+employees WHERE 
+first_name LIKE 'J%';
+LIKE Pattern
+SELECT * FROM 
+employees WHERE 
+department_id IN (10, 20, 
+30);
+
+Great 👍 since you want product-based company level (2–3 years experience) SQL interview questions, I’ll go hard.
+
+I’ll assume the following schema (very common interview-style schema):
+
+employees(emp_id, first_name, last_name, salary, hire_date, department_id, manager_id)
+
+departments(department_id, department_name)
+
+projects(project_id, project_name, department_id, start_date, end_date)
+
+employee_projects(emp_id, project_id, assigned_date)
+
+salaries(emp_id, salary, effective_from)
+🔥 Advanced SQL Interview Questions (20)
+
+These cover:
+
+Joins (inner/left/right/self)
+
+Subqueries (correlated & non-correlated)
+
+Window functions
+
+CTE
+
+Ranking
+
+Aggregations + HAVING
+
+Case statements
+
+Date functions
+
+Performance thinking
+
+Edge cases
+
+Real-world product scenarios
+
+🚀 Q1.
+
+Find the 2nd highest salary in the company without using LIMIT.
+
+🚀 Q2.
+
+Find all employees who earn more than the average salary of their department.
+
+🚀 Q3.
+
+Find the department that has the highest total salary expense.
+
+🚀 Q4.
+
+Find employees who are managers (i.e., they manage at least one employee).
+
+🚀 Q5.
+
+Find employees who do not have a manager but are not in top-level department (department_id is not null).
+
+🚀 Q6.
+
+For each department, find the top 3 highest paid employees.
+
+🚀 Q7.
+
+Find employees who worked on all projects in their department.
+
+🚀 Q8.
+
+Find employees hired in the last 6 months.
+
+🚀 Q9.
+
+Find employees whose salary increased compared to their previous salary record.
+
+(Use salaries table)
+
+🚀 Q10.
+
+Find duplicate employees based on first_name + last_name + hire_date.
+
+🚀 Q11.
+
+Find departments where average salary > company average salary.
+
+🚀 Q12.
+
+Find employees who have worked on more than 2 projects.
+
+🚀 Q13.
+
+Find employees who earn the same salary as their manager.
+
+🚀 Q14.
+
+Find the longest working employee in each department.
+
+🚀 Q15.
+
+Find employees who have never been assigned to any project.
+
+🚀 Q16.
+
+Find departments where no employee earns more than 100000.
+
+🚀 Q17.
+
+Find running total of salary ordered by hire_date.
+
+🚀 Q18.
+
+Find gap between an employee’s salary and the next higher salary.
+
+🚀 Q19.
+
+Find employees who switched departments (assume department history table if needed).
+
+🚀 Q20.
+
+Return employees with salary in top 10% of their department.
+
+🧠 Now Your Task
+
+You try solving these.
+
+Reply with:
+
+"Answers 1–5"
+
+Or "Give me solution for Q1"
+
+Or solve all at once.
+
+After you attempt, I’ll review like a real product company interviewer:
+
+Performance check
+
+Optimization suggestions
+
+Edge case discussion
+
+Alternative approaches
+
+Indexing hints
+
+Time complexity reasoning
+
+If you want, I can also:
+
+Increase difficulty to FAANG level (query optimization + execution plan reasoning)
+
+Convert into a timed mock interview
+
+Add tricky data edge cases
+
+Your move. 💻🔥
+
+solve all at once.
+
+like a real product company interviewer:
+
+Performance check
+
+Optimization suggestions
+
+Edge case discussion
+
+Alternative approaches
+
+Indexing hints
+
+Time complexity reasoning
+
+Perfect. Now I’ll solve all 20 like you’re in a real product-based company interview.
+
+I’ll give:
+
+✅ Optimized solution
+
+🔄 Alternative approach (if relevant)
+
+⚡ Performance discussion
+
+📌 Indexing suggestions
+
+⚠️ Edge cases
+
+⏱ Time complexity reasoning
+
+Assume millions of rows (realistic production scale).
+
+✅ Q1. 2nd Highest Salary (Without LIMIT)
+✅ Solution (Best Practice – Dense Rank)
+SELECT salary
+FROM (
+    SELECT salary,
+           DENSE_RANK() OVER (ORDER BY salary DESC) AS rnk
+    FROM employees
+) t
+WHERE rnk = 2;
+🔄 Alternative
+SELECT MAX(salary)
+FROM employees
+WHERE salary < (SELECT MAX(salary) FROM employees);
+⚡ Performance
+
+Window function → Full sort O(n log n)
+
+Subquery version → Two scans
+
+📌 Index
+CREATE INDEX idx_salary ON employees(salary DESC);
+⚠️ Edge Case
+
+If only 1 distinct salary → returns NULL
+
+Duplicate top salaries handled correctly by DENSE_RANK
+
+✅ Q2. Employees earning more than dept avg
+SELECT e.*
+FROM employees e
+JOIN (
+    SELECT department_id, AVG(salary) avg_sal
+    FROM employees
+    GROUP BY department_id
+) d ON e.department_id = d.department_id
+WHERE e.salary > d.avg_sal;
+⚡ Performance
+
+Aggregation + join
+
+Better than correlated subquery
+
+📌 Index
+(department_id, salary)
+⏱ Complexity
+
+O(n)
+
+✅ Q3. Department with highest total salary
+SELECT department_id
+FROM employees
+GROUP BY department_id
+ORDER BY SUM(salary) DESC
+LIMIT 1;
+⚠️ Edge Case
+
+Tie → returns one only
+
+✅ Q4. Employees who are managers
+SELECT DISTINCT e.*
+FROM employees e
+JOIN employees sub ON e.emp_id = sub.manager_id;
+📌 Index
+(manager_id)
+⚡ Self-join efficient if indexed
+✅ Q5. Employees without manager but department exists
+SELECT *
+FROM employees
+WHERE manager_id IS NULL
+AND department_id IS NOT NULL;
+
+Simple filter → O(n)
+
+✅ Q6. Top 3 per department
+SELECT *
+FROM (
+    SELECT *,
+           DENSE_RANK() OVER (PARTITION BY department_id ORDER BY salary DESC) rnk
+    FROM employees
+) t
+WHERE rnk <= 3;
+⚡ Requires sort per department
+📌 Index
+(department_id, salary DESC)
+✅ Q7. Employees who worked on ALL projects in dept
+SELECT e.emp_id
+FROM employees e
+JOIN employee_projects ep ON e.emp_id = ep.emp_id
+JOIN projects p ON ep.project_id = p.project_id
+WHERE p.department_id = e.department_id
+GROUP BY e.emp_id
+HAVING COUNT(DISTINCT p.project_id) = (
+    SELECT COUNT(*)
+    FROM projects p2
+    WHERE p2.department_id = e.department_id
+);
+⚠️ Hard query (division logic)
+⚡ Expensive → multiple joins + group
+📌 Index
+employee_projects(emp_id, project_id)
+projects(department_id)
+✅ Q8. Hired in last 6 months
+SELECT *
+FROM employees
+WHERE hire_date >= CURRENT_DATE - INTERVAL '6 months';
+📌 Index
+(hire_date)
+⚡ Range scan → very efficient
+✅ Q9. Salary increased from previous record
+SELECT *
+FROM (
+    SELECT emp_id,
+           salary,
+           LAG(salary) OVER (PARTITION BY emp_id ORDER BY effective_from) prev_salary
+    FROM salaries
+) t
+WHERE salary > prev_salary;
+⚡ Requires partition sort
+📌 Index
+(emp_id, effective_from)
+✅ Q10. Duplicate employees
+SELECT first_name, last_name, hire_date, COUNT(*)
+FROM employees
+GROUP BY first_name, last_name, hire_date
+HAVING COUNT(*) > 1;
+✅ Q11. Departments where avg > company avg
+WITH company_avg AS (
+    SELECT AVG(salary) avg_sal FROM employees
+)
+SELECT department_id
+FROM employees, company_avg
+GROUP BY department_id, company_avg.avg_sal
+HAVING AVG(salary) > company_avg.avg_sal;
+✅ Q12. Employees on >2 projects
+SELECT emp_id
+FROM employee_projects
+GROUP BY emp_id
+HAVING COUNT(DISTINCT project_id) > 2;
+✅ Q13. Employees earning same as manager
+SELECT e.*
+FROM employees e
+JOIN employees m ON e.manager_id = m.emp_id
+WHERE e.salary = m.salary;
+
+Self join → index on emp_id + manager_id
+
+✅ Q14. Longest working employee per dept
+SELECT *
+FROM (
+    SELECT *,
+           RANK() OVER (PARTITION BY department_id ORDER BY hire_date ASC) rnk
+    FROM employees
+) t
+WHERE rnk = 1;
+✅ Q15. Employees never assigned project
+SELECT e.*
+FROM employees e
+LEFT JOIN employee_projects ep ON e.emp_id = ep.emp_id
+WHERE ep.emp_id IS NULL;
+⚡ Efficient if index on employee_projects.emp_id
+✅ Q16. Departments where no salary > 100000
+SELECT department_id
+FROM employees
+GROUP BY department_id
+HAVING MAX(salary) <= 100000;
+
+Efficient aggregate
+
+✅ Q17. Running total salary by hire_date
+SELECT emp_id,
+       hire_date,
+       SUM(salary) OVER (ORDER BY hire_date) running_total
+FROM employees;
+
+Sort required
+
+✅ Q18. Gap to next higher salary
+SELECT emp_id,
+       salary,
+       LEAD(salary) OVER (ORDER BY salary) - salary AS salary_gap
+FROM employees;
+✅ Q19. Employees who switched departments
+
+(Assume employee_department_history table)
+
+SELECT emp_id
+FROM employee_department_history
+GROUP BY emp_id
+HAVING COUNT(DISTINCT department_id) > 1;
+✅ Q20. Top 10% salary in department
+SELECT *
+FROM (
+    SELECT *,
+           PERCENT_RANK() OVER (PARTITION BY department_id ORDER BY salary DESC) pr
+    FROM employees
+) t
+WHERE pr <= 0.1;
+⚠️ Edge Case
+
+Small departments → may return 0 rows
+
+🔥 Now Real Interview Evaluation
+📊 Performance Summary
+Pattern	Cost
+Window functions	O(n log n) due to sorting
+Group By	O(n)
+Indexed filters	O(log n)
+Self join	O(n) if indexed
+🧠 What Interviewer Actually Checks
+1️⃣ Do you avoid correlated subqueries?
+
+Bad:
+
+WHERE salary > (SELECT AVG(salary) FROM employees WHERE department_id=e.department_id)
+
+→ runs per row (bad in some engines)
+
+2️⃣ Do you think about indexing?
+
+High-value indexes:
+
+employees(department_id, salary)
+employees(manager_id)
+employee_projects(emp_id)
+salaries(emp_id, effective_from)
+3️⃣ Can you reason about execution plan?
+
+Example Q6:
+
+Partition sort per department
+
+Memory heavy
+
+Better if department small
+
+4️⃣ Can you detect scalability issues?
+
+Q7 (division problem) becomes expensive if:
+
+Many projects per department
+
+Many-to-many join explosion
+
+🚨 FAANG-Level Twist They Might Add
+
+What if employees table has 100M rows?
+
+What if salary updates every second?
+
+How to optimize running total for streaming?
+
+How to rewrite Q7 without subquery?
+
+How to avoid sorting entire table?
+
+If you want next level:
+I can now give:
+
+10 very tricky real production SQL problems
+
+Query optimization scenario questions
+
+Execution plan debugging questions
+
+Index design challenge
+
+Deadlock & transaction isolation questions
+
+Your next move 🔥
+
+FAANG-Level Twist They Might Add
+
+What if employees table has 100M rows?
+
+What if salary updates every second?
+
+How to optimize running total for streaming?
+
+How to rewrite Q7 without subquery?
+
+How to avoid sorting entire table?
+
+If you want next level:
+I can now give:
+
+10 very tricky real production SQL problems
+
+Query optimization scenario questions
+
+Execution plan debugging questions
+
+Index design challenge
+
+Deadlock & transaction isolation questions
+
+Good. Now we’re talking real FAANG system-design + database depth.
+
+I’ll answer each like I would expect from a strong 2–3 year backend engineer who understands internals — not just SQL syntax.
+
+Assume:
+
+employees = 100M rows
+
+salaries = high write throughput
+
+OLTP workload
+
+Mixed read/write traffic
+
+PostgreSQL/MySQL-like engine
+
+🔥 1️⃣ What if employees table has 100M rows?
+
+At 100M rows:
+
+Full table scan = expensive
+
+Full sort = very expensive
+
+Window functions = memory heavy
+
+Bad indexes = disaster
+
+🧠 What Changes?
+❌ Naive Query (Top 3 per dept)
+DENSE_RANK() OVER (PARTITION BY department_id ORDER BY salary DESC)
+
+This requires:
+
+Sorting 100M rows
+
+Possibly spilling to disk
+
+That’s dangerous.
+
+✅ Production Strategy
+1️⃣ Proper Composite Index
+CREATE INDEX idx_dept_salary
+ON employees(department_id, salary DESC);
+
+Now:
+
+Engine can use index order
+
+Avoid full sort
+
+Do index range scans per department
+
+2️⃣ Partitioning (If Very Large)
+
+Partition by:
+
+department_id (if few depts)
+
+OR hash partition by emp_id
+
+OR range partition by hire_date
+
+Partitioning reduces:
+
+I/O
+
+Lock contention
+
+Vacuum cost
+
+3️⃣ Avoid SELECT *
+
+At 100M rows, selecting all columns kills I/O.
+
+Always project only needed columns.
+
+⏱ Time Complexity
+
+Without index:
+
+O(n log n)
+
+With composite index:
+
+O(n)
+
+🔥 2️⃣ What if salary updates every second?
+
+Now we enter high-write workload.
+
+Problems:
+
+Index maintenance cost
+
+Lock contention
+
+MVCC bloat
+
+Replication lag
+
+🚨 What Breaks?
+
+If you have:
+
+CREATE INDEX idx_salary ON employees(salary);
+
+Every salary update:
+
+Deletes old index entry
+
+Inserts new index entry
+
+Causes page splits
+
+Very expensive.
+
+✅ Better Architecture
+1️⃣ Separate Salary History Table (Append-Only)
+
+Never update salary.
+
+Instead:
+
+INSERT INTO salaries(emp_id, salary, effective_from)
+
+Append-only = much faster than UPDATE.
+
+2️⃣ Maintain Current Salary in Cache
+
+Use:
+
+Redis
+
+Materialized view
+
+Periodic refresh
+
+Avoid hitting history table for real-time queries.
+
+3️⃣ Reduce Indexes on Hot Columns
+
+More indexes = slower writes.
+
+In high-write systems:
+
+Minimize indexing
+
+Prefer batch processing
+
+🔥 3️⃣ How to Optimize Running Total for Streaming?
+
+Naive:
+
+SUM(salary) OVER (ORDER BY hire_date)
+
+Requires:
+
+Full sort
+
+Full table scan
+
+Not streaming friendly
+
+🚀 Real Streaming Approach
+Option 1: Maintain Aggregated Table
+
+Create table:
+
+salary_running_total(date, total_salary)
+
+When new employee inserted:
+
+Increment last total
+
+Store new total
+
+Now:
+Query is O(1).
+
+Option 2: Use Incremental Materialized View
+
+Postgres:
+
+REFRESH MATERIALIZED VIEW CONCURRENTLY
+
+Better for batch updates.
+
+Option 3: Event-driven approach
+
+Use:
+
+Kafka
+
+Stream processor
+
+Maintain rolling aggregate
+
+This is how FAANG does it.
+
+🔥 4️⃣ Rewrite Q7 Without Subquery (Division Problem)
+
+Original used correlated HAVING subquery.
+
+We remove subquery using JOIN logic.
+
+✅ Pure Join + HAVING Version
+SELECT e.emp_id
+FROM employees e
+JOIN projects p
+  ON p.department_id = e.department_id
+LEFT JOIN employee_projects ep
+  ON ep.emp_id = e.emp_id
+ AND ep.project_id = p.project_id
+GROUP BY e.emp_id
+HAVING COUNT(DISTINCT p.project_id)
+     = COUNT(DISTINCT ep.project_id);
+🧠 Why Better?
+
+No correlated subquery
+
+Single grouped scan
+
+Better optimizer plan
+
+📌 Index Needed
+employee_projects(emp_id, project_id)
+projects(department_id, project_id)
+🔥 5️⃣ How to Avoid Sorting Entire Table?
+
+Sorting = expensive because:
+
+Memory heavy
+
+Disk spill risk
+
+✅ Strategies
+1️⃣ Use Index Order
+
+Instead of:
+
+ORDER BY salary DESC
+
+Create:
+
+INDEX(salary DESC)
+
+DB reads already sorted index.
+
+No sort needed.
+
+2️⃣ Use Top-N Optimization
+
+If:
+
+ORDER BY salary DESC LIMIT 10
+
+With index:
+
+Engine stops after 10 rows
+
+No full sort
+
+3️⃣ Pre-aggregated Tables
+
+For dashboards:
+
+Store precomputed rankings
+
+Update periodically
+
+🔥 Now Let’s Go Next Level
+
+You asked for deeper.
+
+Here are the next 10 very tricky production SQL problems FAANG might ask.
+
+💀 Advanced Real-World SQL Problems
+1️⃣ Detect data skew in partitions
+
+Find departments where 80% of salary is paid to 10% of employees.
+
+2️⃣ Identify lock contention issue
+
+Given slow update queries, how do you detect blocking transactions?
+
+3️⃣ Optimize query with 5 joins running in 20 seconds
+
+Explain how you'd debug:
+
+Execution plan
+
+Hash join vs nested loop
+
+Row estimates
+
+4️⃣ Design indexing strategy for:
+
+90% reads
+
+10% writes
+
+Frequent filter on department + hire_date
+
+5️⃣ Write query to detect phantom reads scenario.
+6️⃣ Implement pagination for 100M rows without OFFSET.
+
+(Hint: Keyset pagination)
+
+7️⃣ Detect duplicate salary updates within 5 seconds window.
+8️⃣ Write SQL to rebalance department workload evenly.
+9️⃣ Find anomalies in salary jumps (>50% increase).
+🔟 Design schema for audit-safe financial salary tracking.
+🔥 Now Interview Mode
+
+Tell me what you want next:
+
+Solve those 10 problems
+
+Deep dive into execution plan analysis
+
+Isolation levels + deadlock debugging
+
+Index design challenge (real scenario)
+
+Mock FAANG interview simulation (live back and forth)
+
+Pick your difficulty level.
+
+Solve those 10 problems
+
+Deep dive into execution plan analysis
+
+Isolation levels + deadlock debugging
+
+Index design challenge (real scenario)
+
+Mock FAANG interview simulation (live back and forth)
+
+Perfect. Now we move into real senior-engineer territory.
+
+This is how a FAANG SQL round actually feels:
+
+Heavy data scale
+
+Locking problems
+
+Optimizer misestimates
+
+Index tradeoffs
+
+Concurrency bugs
+
+I’ll structure this into 5 sections:
+
+1️⃣ Solve the 10 advanced production problems
+2️⃣ Deep dive into execution plan analysis
+3️⃣ Isolation levels + deadlock debugging
+4️⃣ Real index design challenge
+5️⃣ Start live mock interview simulation
+
+🔥 PART 1 — Solve the 10 Production SQL Problems
+1️⃣ Detect Salary Skew (80% salary paid to 10% employees)
+
+This is Pareto analysis per department.
+
+✅ Solution (Window + Cumulative Distribution)
+WITH dept_salary AS (
+    SELECT department_id,
+           emp_id,
+           salary,
+           SUM(salary) OVER (PARTITION BY department_id) AS total_dept_salary,
+           SUM(salary) OVER (
+               PARTITION BY department_id
+               ORDER BY salary DESC
+               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+           ) AS cumulative_salary,
+           COUNT(*) OVER (PARTITION BY department_id) AS dept_count,
+           ROW_NUMBER() OVER (
+               PARTITION BY department_id
+               ORDER BY salary DESC
+           ) AS rn
+    FROM employees
+)
+SELECT DISTINCT department_id
+FROM dept_salary
+WHERE cumulative_salary >= 0.8 * total_dept_salary
+  AND rn <= 0.1 * dept_count;
+What Interviewer Wants:
+
+You know window functions
+
+You can do cumulative distribution
+
+You understand business insight extraction
+
+Scale Concern:
+
+Needs sorting per department → composite index:
+
+(department_id, salary DESC)
+2️⃣ Detect Lock Contention / Blocking Transactions
+
+In PostgreSQL:
+
+SELECT blocked.pid AS blocked_pid,
+       blocking.pid AS blocking_pid,
+       blocked.query AS blocked_query,
+       blocking.query AS blocking_query
+FROM pg_catalog.pg_locks blocked_locks
+JOIN pg_catalog.pg_stat_activity blocked
+  ON blocked.pid = blocked_locks.pid
+JOIN pg_catalog.pg_locks blocking_locks
+  ON blocking_locks.locktype = blocked_locks.locktype
+ AND blocking_locks.DATABASE IS NOT DISTINCT FROM blocked_locks.DATABASE
+ AND blocking_locks.relation IS NOT DISTINCT FROM blocked_locks.relation
+ AND blocking_locks.pid != blocked_locks.pid
+JOIN pg_catalog.pg_stat_activity blocking
+  ON blocking.pid = blocking_locks.pid
+WHERE NOT blocked_locks.granted;
+What They Check:
+
+Do you know system catalog tables?
+
+Do you understand lock graphs?
+
+3️⃣ Optimize 5-Join 20s Query
+
+Step-by-step:
+
+Step 1: EXPLAIN ANALYZE
+
+Look for:
+
+Sequential Scan on big tables
+
+Hash Join vs Nested Loop
+
+Rows estimate vs actual rows
+
+If estimate = 1 but actual = 1M → stats problem.
+
+Fixes:
+
+Update statistics:
+
+ANALYZE employees;
+
+Add composite index on join columns
+
+Reduce SELECT *
+
+4️⃣ Index Strategy (90% Reads, 10% Writes)
+
+Frequent filter:
+
+WHERE department_id = ? AND hire_date > ?
+Best Index:
+CREATE INDEX idx_dept_hire ON employees(department_id, hire_date);
+
+Why order matters:
+
+department filter first
+
+then range on hire_date
+
+Tradeoff:
+
+More indexes = slower writes
+
+Balance based on workload
+
+5️⃣ Phantom Reads Scenario
+
+Transaction 1:
+
+BEGIN;
+SELECT COUNT(*) FROM employees WHERE salary > 100000;
+
+Transaction 2:
+
+INSERT INTO employees VALUES (... salary=200000);
+COMMIT;
+
+Transaction 1 re-runs query → count changed.
+
+Phantom read.
+
+Solution:
+Use SERIALIZABLE isolation.
+
+6️⃣ Pagination without OFFSET (Keyset Pagination)
+
+Bad:
+
+LIMIT 10 OFFSET 1000000
+
+Good:
+
+SELECT *
+FROM employees
+WHERE emp_id > last_seen_id
+ORDER BY emp_id
+LIMIT 10;
+
+Requires:
+
+INDEX(emp_id)
+
+This is how Google does infinite scroll.
+
+7️⃣ Duplicate Salary Updates within 5 Seconds
+SELECT s1.emp_id
+FROM salaries s1
+JOIN salaries s2
+  ON s1.emp_id = s2.emp_id
+ AND s1.effective_from < s2.effective_from
+ AND s2.effective_from <= s1.effective_from + INTERVAL '5 seconds';
+
+Better with LAG:
+
+SELECT emp_id
+FROM (
+    SELECT emp_id,
+           effective_from,
+           LAG(effective_from) OVER (PARTITION BY emp_id ORDER BY effective_from) prev_time
+    FROM salaries
+) t
+WHERE effective_from - prev_time <= INTERVAL '5 seconds';
+8️⃣ Rebalance Department Workload
+
+Even distribution using NTILE:
+
+SELECT emp_id,
+       NTILE(5) OVER (ORDER BY salary DESC) AS new_bucket
+FROM employees;
+9️⃣ Salary Jump > 50%
+SELECT *
+FROM (
+    SELECT emp_id,
+           salary,
+           LAG(salary) OVER (PARTITION BY emp_id ORDER BY effective_from) prev_salary
+    FROM salaries
+) t
+WHERE salary > 1.5 * prev_salary;
+🔟 Audit-Safe Financial Salary Tracking
+
+Design:
+
+employees (immutable identity info)
+salary_events (
+    event_id PK,
+    emp_id,
+    old_salary,
+    new_salary,
+    changed_by,
+    changed_at,
+    reason,
+    checksum_hash
+)
+
+Never UPDATE salary.
+Only INSERT events.
+
+Why?
+
+Audit trail
+
+Legal compliance
+
+Financial integrity
+
+🔥 PART 2 — Execution Plan Deep Dive
+
+When interviewer says:
+
+“Explain why this query is slow.”
+
+You respond:
+
+1️⃣ Check Scan Type
+
+Seq Scan → bad if table large
+
+Index Scan → good
+
+Bitmap Index Scan → medium
+
+2️⃣ Join Type
+
+Nested Loop → good for small joins
+
+Hash Join → good for large joins
+
+Merge Join → needs sorted inputs
+
+3️⃣ Cardinality Estimate
+
+If:
+
+Estimated rows: 10
+Actual rows: 1,000,000
+
+Optimizer picked wrong plan.
+
+Fix:
+
+ANALYZE
+
+Better statistics
+
+Extended stats
+
+🔥 PART 3 — Isolation Levels
+Level	Dirty Read	Non-Repeatable	Phantom
+READ COMMITTED	❌	✅	✅
+REPEATABLE READ	❌	❌	✅
+SERIALIZABLE	❌	❌	❌
+Deadlock Example
+
+Transaction A:
+
+UPDATE employees SET salary=... WHERE emp_id=1;
+UPDATE employees SET salary=... WHERE emp_id=2;
+
+Transaction B:
+
+UPDATE employees SET salary=... WHERE emp_id=2;
+UPDATE employees SET salary=... WHERE emp_id=1;
+
+Deadlock.
+
+Fix:
+
+Always update in consistent order
+
+Keep transactions short
+
+🔥 PART 4 — Real Index Design Challenge
+
+Scenario:
+
+100M rows
+Queries:
+
+Get employee by emp_id
+
+Filter by department_id
+
+Filter by department_id + hire_date
+
+Sort by salary DESC LIMIT 10
+
+Ideal Index Set:
+PRIMARY KEY(emp_id)
+
+INDEX(department_id)
+
+INDEX(department_id, hire_date)
+
+INDEX(salary DESC)
+
+But this may be too many for high writes.
+
+Optimized compromise:
+
+PRIMARY KEY(emp_id)
+INDEX(department_id, hire_date)
+INDEX(salary DESC)
+
+Because:
+
+department-only filter can still use composite index prefix
+
+fewer index writes
+
+🔥 PART 5 — LIVE FAANG MOCK INTERVIEW
+
+Now we switch to live mode.
+
+I will ask one question at a time.
+You respond.
+I challenge you.
+
+🎯 Question 1
+
+You have 100M rows in employees.
+
+This query is slow:
+
+SELECT *
+FROM employees
+WHERE department_id = 10
+ORDER BY salary DESC
+LIMIT 5;
+
+Explain:
+
+What execution plan likely happens?
+
+What index would you create?
+
+Why column order matters?
+
+What happens if department 10 has 5M rows?
+
+Your turn. Answer like you’re in Google onsite.
+
+I will interrupt and challenge you.
+
+What execution plan likely happens?
+
+What index would you create?
+
+Why column order matters?
+
+What happens if department 10 has 5M rows?   Also you may interrupt and challenge me like i am in Google onsite. And answer me at end of each  
+
+Good. I’m switching fully into Google onsite mode now.
+
+I’ll interrupt you, challenge assumptions, push on scale, and then at the end I’ll give the “strong hire” version of the answer.
+
+🧠 Problem
+SELECT *
+FROM employees
+WHERE department_id = 10
+ORDER BY salary DESC
+LIMIT 5;
+
+Assume:
+
+100M rows
+
+No relevant index yet
+
+department 10 has 5M rows
+
+🎯 1️⃣ What execution plan likely happens?
+
+Let’s pretend you answered:
+
+“It will do a full table scan, filter department_id, then sort by salary, then apply LIMIT.”
+
+🔴 I interrupt:
+
+Why full table scan?
+
+What if there’s an index on department_id?
+
+What if there’s an index on salary?
+
+Would it sort 100M rows or 5M rows?
+
+What join type? What scan type?
+
+What memory risk exists?
+
+Push deeper.
+
+✅ Real Answer (Strong Candidate)
+
+If no index exists:
+
+Execution plan:
+
+Seq Scan on employees
+
+Read all 100M rows
+
+Filter department_id = 10
+
+Produces ~5M rows
+
+Sort 5M rows by salary DESC
+
+Apply LIMIT 5
+
+Plan shape:
+
+Limit
+  -> Sort
+       -> Seq Scan
+
+Cost drivers:
+
+Full table I/O
+
+5M row sort (O(n log n))
+
+Possible disk spill if work_mem insufficient
+
+If index on department_id exists:
+
+Limit
+  -> Sort
+       -> Index Scan (department_id)
+
+Better than full scan, but still sorting 5M rows.
+
+🎯 2️⃣ What index would you create?
+
+If you say:
+
+“Create index on department_id”
+
+🛑 I interrupt:
+
+Does that remove sort?
+
+Does that avoid scanning 5M rows?
+
+Is LIMIT optimized?
+
+Can database stop early?
+
+Push further.
+
+✅ Strong Hire Answer
+
+Create composite index:
+
+CREATE INDEX idx_dept_salary
+ON employees(department_id, salary DESC);
+
+Why?
+
+Because now index structure looks like:
+
+(dept=10, salary=200k)
+(dept=10, salary=190k)
+(dept=10, salary=180k)
+...
+
+So query becomes:
+
+Index seek to department_id = 10
+
+Already ordered by salary DESC
+
+Read first 5 rows
+
+STOP
+
+No sort.
+No scanning 5M rows.
+Only 5 index entries read (+ heap fetch if not covering).
+
+Plan becomes:
+
+Limit
+  -> Index Scan using idx_dept_salary
+
+This is called Top-N optimization using ordered index.
+
+Time complexity becomes:
+O(log n + k)
+k = 5
+
+Huge improvement.
+
+🎯 3️⃣ Why column order matters?
+
+If you create:
+
+CREATE INDEX idx_salary_dept
+ON employees(salary DESC, department_id);
+
+Is that good?
+
+Most candidates say yes.
+
+Wrong.
+
+Why?
+
+Because B-tree ordering is left-prefix based.
+
+Index is ordered like:
+
+salary=200k dept=5
+salary=200k dept=10
+salary=199k dept=3
+salary=199k dept=10
+...
+
+Now to find department_id = 10:
+
+Database must scan entire salary space to find matches.
+
+So:
+
+Can’t efficiently filter department first
+
+Can’t jump directly to department 10
+
+Correct order:
+
+(department_id, salary DESC)
+
+Because:
+
+Equality filter first
+
+Then ordering column
+
+General rule:
+
+Equality columns → first
+Range/Order columns → next
+
+That’s what FAANG expects you to say.
+
+🎯 4️⃣ What if department 10 has 5M rows?
+
+Good. Now we escalate.
+
+If we don’t have composite index:
+
+Index on department_id alone
+
+5M row index scan
+
+5M heap lookups
+
+5M row sort
+
+Heavy CPU
+Heavy memory
+Possible disk spill
+
+If we do have composite index:
+
+Database:
+
+Seeks to first (10, highest_salary)
+
+Reads 5 entries
+
+Stops
+
+Even if dept 10 has 5M rows,
+only 5 are read.
+
+This is critical insight:
+Cardinality inside partition does NOT matter if index ordering supports LIMIT.
+
+🧠 Now I Challenge You Harder
+
+What if query becomes:
+
+SELECT *
+FROM employees
+WHERE department_id IN (10, 20)
+ORDER BY salary DESC
+LIMIT 5;
+
+Does your composite index still fully solve it?
+
+Think carefully.
+
+It cannot do a single ordered scan.
+It may need:
+
+Two index scans
+
+Merge them
+
+Then apply top-N
+
+That’s more complex.
+
+Strong candidate mentions:
+
+Bitmap index scan
+
+OR expansion
+
+Or rewriting with UNION ALL + LIMIT
+
+💎 What a “Strong Hire” Candidate Would Say (Full Polished Answer)
+
+Without an appropriate composite index, the optimizer will perform a sequential scan or an index scan on department_id, then sort approximately 5M rows, and finally apply LIMIT.
+This results in O(n log n) sort cost and heavy I/O.
+
+I would create a composite index on (department_id, salary DESC).
+This allows the engine to perform an index seek to department_id=10 and read rows in salary-descending order, enabling early termination after 5 rows.
+
+Column order matters because B-tree indexes support left-prefix matching.
+Placing department_id first allows equality filtering, and salary second supports ordering.
+
+Even if department 10 contains 5M rows, the index enables O(log n + k) retrieval, where k=5, avoiding scanning or sorting all 5M rows.
+
+That answer gets strong signal at Google.
+
+🔥 Now Next Level Question (Harder)
+
+What if:
+
+100M rows
+
+Salary updates every second
+
+We have this composite index
+
+Write performance starts degrading
+
+Would you:
+
+Keep index?
+
+Drop index?
+
+Redesign schema?
+
+Use materialized view?
+
+Partition table?
+
+Answer this. I will challenge you again.
+
+hat if:
+
+100M rows
+
+Salary updates every second
+
+We have this composite index
+
+Write performance starts degrading
+
+Would you:
+
+Keep index?
+
+Drop index?
+
+Redesign schema?
+
+Use materialized view?
+
+Partition table? as aboved this also and give all que answers also for correcting myself.
+
+Excellent. Now we’re at Staff-level thinking.
+
+Scenario:
+
+100M rows
+
+Composite index (department_id, salary DESC)
+
+Salary updates every second
+
+Write performance degrading
+
+This is a classic read vs write tradeoff under high churn on indexed column.
+
+I will:
+
+Challenge each option like onsite
+
+Give the correct strategic answer
+
+Explain why
+
+Provide production-grade reasoning
+
+🚨 First Principles: Why Writes Are Slow?
+
+Every salary update:
+
+UPDATE employees
+SET salary = 150000
+WHERE emp_id = 123;
+
+Because salary is indexed:
+
+Old index entry deleted
+
+New index entry inserted
+
+Possible page split
+
+Possible index rebalancing
+
+Extra WAL logging
+
+Replication overhead
+
+At high frequency → serious index churn.
+
+🎯 Option 1 — Keep the Index
+
+When is this correct?
+
+If:
+
+Query is business-critical
+
+Low-latency required
+
+Write volume acceptable
+
+But here:
+Salary updates every second → heavy write workload.
+
+Keeping index blindly = not strong answer.
+
+🎯 Option 2 — Drop the Index
+
+If we drop:
+
+DROP INDEX idx_dept_salary;
+
+Pros:
+
+Writes become faster
+
+Less index maintenance
+
+Cons:
+
+Query becomes slow (sort 5M rows)
+
+Read latency explodes
+
+FAANG systems rarely sacrifice critical read path unless query not important.
+
+So dropping alone = weak architectural thinking.
+
+🎯 Option 3 — Redesign Schema (🔥 Strong Answer)
+
+This is where strong engineers shine.
+
+Instead of updating salary inside employees, we:
+
+Move salary into append-only table
+employees (emp_id, name, department_id, hire_date)
+
+employee_salary_current (emp_id, salary)
+
+salary_events (emp_id, old_salary, new_salary, timestamp)
+
+Now:
+
+employees rarely updated
+
+employee_salary_current small, narrow table
+
+Composite index only on smaller hot table
+
+Or even:
+
+Make salary_current table:
+
+CREATE TABLE salary_current (
+    emp_id BIGINT PRIMARY KEY,
+    department_id INT,
+    salary NUMERIC
+);
+
+Index only this:
+
+CREATE INDEX idx_dept_salary
+ON salary_current(department_id, salary DESC);
+
+Why better?
+
+Narrow table → fewer pages
+
+Less write amplification
+
+Smaller index size
+
+Faster cache residency
+
+This is strong answer.
+
+🎯 Option 4 — Use Materialized View
+
+If query:
+
+Top 5 salary per department
+
+And it’s heavily used (dashboard use case),
+
+We could maintain:
+
+department_top_5 (
+    department_id,
+    emp_id,
+    salary
+)
+
+Update this table asynchronously.
+
+Pros:
+
+Query becomes O(1)
+
+No heavy sorting
+
+Cons:
+
+Complexity
+
+Eventual consistency
+
+Maintenance logic
+
+Used in:
+
+High-scale analytics systems
+
+Leaderboards
+
+Ranking systems
+
+Strong answer mentions:
+"Depends on freshness requirement."
+
+🎯 Option 5 — Partition Table
+
+If partition by department:
+
+Each department in separate partition.
+
+Now update only affects one partition’s index.
+
+Pros:
+
+Smaller B-trees
+
+Less page contention
+
+Better vacuum behavior
+
+Cons:
+
+If many departments → management overhead
+
+Cross-department queries expensive
+
+Partitioning helps, but does not eliminate index update cost.
+
+🏆 Strong Hire Answer (Polished)
+
+Because salary is frequently updated and part of a composite index, each update triggers index delete + insert operations, causing page splits and write amplification.
+
+I would not immediately drop the index if the read query is business-critical.
+
+Instead, I would redesign schema:
+
+Move salary to a separate, narrow table
+
+Maintain append-only salary events for audit
+
+Keep composite index only on current salary table
+
+If read query is extremely hot and tolerates slight staleness, I would introduce a materialized view or precomputed leaderboard table.
+
+Partitioning can help reduce index size and contention but does not fundamentally eliminate index churn.
+
+The final decision depends on read/write ratio and SLA requirements.
+
+That answer = strong system thinking.
+
+🔥 Now Let Me Correct Everything in One Summary (For Self-Evaluation)
+If:
+
+Reads >> Writes → Keep composite index
+
+Writes >> Reads → Consider dropping or redesign
+
+Both high → Schema separation + caching layer
+
+Real-time leaderboard → Materialized/precomputed table
+
+Heavy contention → Partition + narrow hot table
+
+💎 Deeper System Insight
+
+At FAANG scale:
+
+They often:
+
+Separate OLTP and OLAP
+
+Use read replicas
+
+Use caching layer (Redis)
+
+Maintain ranking service outside DB
+
+Avoid heavy ranking queries on hot tables
+
+🚀 Now I Push You Harder
+
+Imagine:
+
+100M rows
+
+10K salary updates per second
+
+500 QPS for top-5-per-department query
+
+Strict <50ms latency requirement
+
+You are backend owner.
+
+Design architecture.
+
+You cannot just say “add index.”
+
+Think:
+
+Caching?
+
+Async processing?
+
+Event streaming?
+
+Read replicas?
+
+CQRS?
+
+Answer like a senior engineer.
+
+I will critique like Meta E5 interviewer.
+
+100M rows
+
+10K salary updates per second
+
+500 QPS for top-5-per-department query
+
+Strict <50ms latency requirement
+
+You are backend owner.
+
+Design architecture.
+
+You cannot just say “add index.”
+
+Think:
+
+Caching?
+
+Async processing?
+
+Event streaming?
+
+Read replicas?
+
+CQRS?
+
+Answer like a senior engineer.
+
+I will critique like Meta E5 interviewer.
+
+Excellent. I’m switching to Meta E5 / Google L5 system depth mode.
+
+You are no longer answering as “SQL developer”.
+You are now backend owner responsible for SLA, scale, and correctness.
+
+🎯 Problem Restated
+
+100M employees
+
+10,000 salary updates / second
+
+500 QPS for:
+
+Top 5 employees per department by salary
+
+Strict < 50ms P99 latency
+
+Strong consistency for writes
+
+Near-real-time ranking acceptable (assume <2s staleness OK)
+
+🚨 First: Why Naive DB Solution Fails
+
+If you rely on:
+
+INDEX(department_id, salary DESC)
+
+At 10K updates/sec:
+
+Massive B-tree churn
+
+Page splits
+
+Lock contention
+
+WAL pressure
+
+Replication lag
+
+Autovacuum pressure
+
+Increased tail latency
+
+Even if reads are fast,
+writes will kill you.
+
+This is not a single-database problem anymore.
+
+🧠 High-Level Architecture (CQRS + Streaming + Cache)
+
+We split:
+
+Write Path
+
+and
+
+Read Path
+
+This is CQRS (Command Query Responsibility Segregation).
+
+🏗 Final Architecture
+                ┌──────────────┐
+                │  API Layer   │
+                └──────┬───────┘
+                       │
+            ┌──────────┴──────────┐
+            │                     │
+       Write Path             Read Path
+            │                     │
+        OLTP DB              Redis Cluster
+            │                     ▲
+            ▼                     │
+        Kafka Topic  ──────►  Ranking Service
+🔥 WRITE PATH (10K/sec)
+
+API receives salary update.
+
+Update OLTP primary DB (normalized storage).
+
+Publish salary update event to Kafka.
+
+Return success immediately.
+
+Important:
+
+DB optimized for writes.
+
+No heavy ranking logic here.
+
+No expensive indexes on salary ranking.
+
+🔥 STREAM PROCESSING LAYER
+
+Kafka consumers:
+
+Partitioned by department_id
+
+Each partition processed sequentially
+
+Maintain in-memory top-5 heap per department
+
+Data structure per department:
+Min-heap of size 5.
+
+Time complexity per update:
+O(log 5) → constant.
+
+🔥 READ PATH (500 QPS < 50ms)
+
+Top-5 per department stored in:
+
+Redis:
+
+Key: dept:{id}:top5
+Value: sorted set
+
+Query flow:
+
+API checks Redis
+
+Returns top-5
+
+<5ms latency typical
+
+No DB hit.
+
+🧠 Why This Works
+Writes:
+
+Only single-row DB update
+
+No expensive index reordering
+
+Kafka is append-only
+
+Reads:
+
+O(1) Redis lookup
+
+No sorting
+
+No scanning
+
+No DB lock contention
+
+🔒 Consistency Discussion (Meta will push here)
+
+Q: What about race conditions?
+
+Answer:
+
+Salary update event ordering guaranteed per department via Kafka partitioning.
+
+If strict ordering needed → use key-based partitioning.
+
+Q: What if consumer crashes?
+
+Offset management + replay from Kafka.
+
+Rebuild state by replaying topic.
+
+Q: What about cold start?
+
+On service boot, load snapshot from DB.
+
+Then replay delta events.
+
+Strong candidates mention recovery strategy.
+
+🧠 Why Not Read Replicas?
+
+Read replicas:
+
+Still rely on composite index
+
+Still incur index maintenance on primary
+
+Replicas lag under heavy write
+
+Doesn’t solve write amplification
+
+So replicas alone are insufficient.
+
+🧠 Why Not Materialized View in DB?
+
+At 10K writes/sec:
+
+Continuous refresh expensive
+
+Locks
+
+Lag
+
+Not sub-50ms guaranteed
+
+Database not ideal for real-time ranking at this scale.
+
+🧠 What About Partitioning?
+
+Partition by department_id:
+
+Reduces index size
+
+Improves write locality
+
+Helps vacuum
+
+But:
+
+Still index maintenance per partition
+
+Doesn’t eliminate ranking cost
+
+Helpful but not sufficient alone.
+
+🎯 Scaling Further
+
+If departments = 10,000:
+
+Kafka partitions = 10,000
+
+Consumers horizontally scaled
+
+Redis cluster sharded by department_id
+
+Fully scalable.
+
+🔥 Latency Budget
+Component	Latency
+Redis GET	~1–3ms
+API overhead	~5ms
+Network	~5–10ms
+Total	~20ms P99
+
+Comfortably <50ms.
+
+🏆 Strong Senior-Level Summary
+
+I would separate write and read paths using CQRS.
+
+Writes go to primary OLTP DB and emit events to Kafka.
+A streaming consumer maintains per-department top-5 in Redis using a min-heap.
+
+Reads hit Redis directly, guaranteeing sub-50ms latency.
+
+This avoids B-tree churn from frequent salary updates and eliminates heavy sorting from read queries.
+
+The system remains horizontally scalable and fault-tolerant via event replay.
+
+That’s strong E5 signal.
+
+🚨 Now I Critique You Like Meta
+
+If you only said:
+
+“Add index”
+
+“Use read replica”
+
+“Use partitioning”
+
+→ That’s mid-level thinking.
+
+If you said:
+
+Separate read/write paths
+
+Use streaming
+
+Use in-memory ranking
+
+Handle replay + failure
+
+Consider consistency guarantees
+
+→ That’s senior.
+
+🔥 Now Let’s Go One Level Harder
+
+Meta follow-up:
+
+What if:
+
+We now require strictly consistent top-5
+
+No staleness allowed
+
+Salary updates must reflect immediately in ranking
+
+Redis async pipeline no longer enough.
+
+How would you redesign?
+
+Be careful. This is where many fail.
+
+Answer.
+
+give me all this chat in pdf for download
+
+I can’t directly attach a downloadable PDF file here, but I can give you a clean, properly structured PDF-ready version of this entire discussion so you can:
+
+Copy it into Google Docs / MS Word
+
+Or paste into Notion
+
+Or save as PDF via File → Export → PDF
+
+I’ll format it professionally so it looks like real FAANG SQL prep notes.
+
+📘 FAANG-Level SQL & System Design Interview Preparation Notes
+
+Candidate Level: 2–3 Years → Senior Track Growth
+
+SECTION 1: Advanced SQL Interview Questions (20)
+Schema Assumed
+employees(emp_id, first_name, last_name, salary, hire_date, department_id, manager_id)
+
+departments(department_id, department_name)
+
+projects(project_id, project_name, department_id, start_date, end_date)
+
+employee_projects(emp_id, project_id, assigned_date)
+
+salaries(emp_id, salary, effective_from)
+Q1. 2nd Highest Salary
+SELECT salary
+FROM (
+    SELECT salary,
+           DENSE_RANK() OVER (ORDER BY salary DESC) rnk
+    FROM employees
+) t
+WHERE rnk = 2;
+
+Time Complexity: O(n log n)
+Index: (salary DESC)
+
+Q2. Salary > Department Average
+SELECT e.*
+FROM employees e
+JOIN (
+    SELECT department_id, AVG(salary) avg_sal
+    FROM employees
+    GROUP BY department_id
+) d ON e.department_id = d.department_id
+WHERE e.salary > d.avg_sal;
+
+Index: (department_id, salary)
+
+Q3. Department with Highest Total Salary
+SELECT department_id
+FROM employees
+GROUP BY department_id
+ORDER BY SUM(salary) DESC
+LIMIT 1;
+Q4. Employees Who Are Managers
+SELECT DISTINCT e.*
+FROM employees e
+JOIN employees sub ON e.emp_id = sub.manager_id;
+
+Index: (manager_id)
+
+Q5. Employees Without Manager but With Department
+SELECT *
+FROM employees
+WHERE manager_id IS NULL
+AND department_id IS NOT NULL;
+Q6. Top 3 per Department
+SELECT *
+FROM (
+    SELECT *,
+           DENSE_RANK() OVER (
+               PARTITION BY department_id
+               ORDER BY salary DESC
+           ) rnk
+    FROM employees
+) t
+WHERE rnk <= 3;
+
+Index: (department_id, salary DESC)
+
+Q7. Employees Who Worked on All Projects in Department
+SELECT e.emp_id
+FROM employees e
+JOIN projects p
+  ON p.department_id = e.department_id
+LEFT JOIN employee_projects ep
+  ON ep.emp_id = e.emp_id
+ AND ep.project_id = p.project_id
+GROUP BY e.emp_id
+HAVING COUNT(DISTINCT p.project_id)
+     = COUNT(DISTINCT ep.project_id);
+Q8. Hired in Last 6 Months
+SELECT *
+FROM employees
+WHERE hire_date >= CURRENT_DATE - INTERVAL '6 months';
+
+Index: (hire_date)
+
+Q9. Salary Increased from Previous Record
+SELECT *
+FROM (
+    SELECT emp_id,
+           salary,
+           LAG(salary) OVER (
+               PARTITION BY emp_id
+               ORDER BY effective_from
+           ) prev_salary
+    FROM salaries
+) t
+WHERE salary > prev_salary;
+
+Index: (emp_id, effective_from)
+
+Q10. Duplicate Employees
+SELECT first_name, last_name, hire_date
+FROM employees
+GROUP BY first_name, last_name, hire_date
+HAVING COUNT(*) > 1;
+Q11. Departments Where Avg > Company Avg
+WITH company_avg AS (
+    SELECT AVG(salary) avg_sal FROM employees
+)
+SELECT department_id
+FROM employees, company_avg
+GROUP BY department_id, company_avg.avg_sal
+HAVING AVG(salary) > company_avg.avg_sal;
+Q12. Employees on More Than 2 Projects
+SELECT emp_id
+FROM employee_projects
+GROUP BY emp_id
+HAVING COUNT(DISTINCT project_id) > 2;
+Q13. Employees Earning Same as Manager
+SELECT e.*
+FROM employees e
+JOIN employees m
+  ON e.manager_id = m.emp_id
+WHERE e.salary = m.salary;
+Q14. Longest Working Employee per Department
+SELECT *
+FROM (
+    SELECT *,
+           RANK() OVER (
+               PARTITION BY department_id
+               ORDER BY hire_date ASC
+           ) rnk
+    FROM employees
+) t
+WHERE rnk = 1;
+Q15. Employees Never Assigned to Project
+SELECT e.*
+FROM employees e
+LEFT JOIN employee_projects ep
+  ON e.emp_id = ep.emp_id
+WHERE ep.emp_id IS NULL;
+Q16. Departments Where No Salary > 100000
+SELECT department_id
+FROM employees
+GROUP BY department_id
+HAVING MAX(salary) <= 100000;
+Q17. Running Total by Hire Date
+SELECT emp_id,
+       hire_date,
+       SUM(salary) OVER (ORDER BY hire_date) running_total
+FROM employees;
+Q18. Gap to Next Higher Salary
+SELECT emp_id,
+       salary,
+       LEAD(salary) OVER (ORDER BY salary) - salary AS gap
+FROM employees;
+Q19. Employees Who Switched Departments
+SELECT emp_id
+FROM employee_department_history
+GROUP BY emp_id
+HAVING COUNT(DISTINCT department_id) > 1;
+Q20. Top 10% per Department
+SELECT *
+FROM (
+    SELECT *,
+           PERCENT_RANK() OVER (
+               PARTITION BY department_id
+               ORDER BY salary DESC
+           ) pr
+    FROM employees
+) t
+WHERE pr <= 0.1;
+SECTION 2: Execution Plan Deep Dive
+
+Key Checks in EXPLAIN ANALYZE:
+
+Sequential Scan vs Index Scan
+
+Hash Join vs Nested Loop
+
+Estimated rows vs Actual rows
+
+Sort spill to disk
+
+Index usage efficiency
+
+If estimate mismatch → run ANALYZE or improve statistics.
+
+SECTION 3: Isolation Levels
+Level	Dirty Read	Non-Repeatable	Phantom
+READ COMMITTED	No	Yes	Yes
+REPEATABLE READ	No	No	Yes
+SERIALIZABLE	No	No	No
+
+Deadlock Avoidance:
+
+Always update rows in consistent order
+
+Keep transactions short
+
+Proper indexing to reduce lock scope
+
+SECTION 4: Index Design Strategy
+
+For 100M rows:
+
+PRIMARY KEY(emp_id)
+INDEX(department_id, hire_date)
+INDEX(salary DESC)
+
+Equality columns first
+Range/order columns next
+
+SECTION 5: High-Scale System Architecture (10K Updates/sec)
+Requirements:
+
+10K writes/sec
+
+500 QPS reads
+
+<50ms latency
+
+Final Architecture: CQRS + Streaming + Cache
+
+Write Path:
+
+Update OLTP DB
+
+Emit event to Kafka
+
+Processing:
+
+Kafka consumer maintains per-department top-5 heap
+
+Read Path:
+
+Redis sorted set
+
+O(1) lookup
+
+<20ms typical
+
+Why:
+
+Avoid B-tree churn
+
+Avoid heavy sorting
+
+Horizontal scalability
+
+Senior-Level Key Insights
+
+• Don’t solve scale with only indexes
+• Separate read/write concerns
+• Use streaming for ranking problems
+• Cache aggressively for top-N queries
+• Consider consistency guarantees
+• Think about recovery & replay
+
+How to Convert This to PDF
+Option 1 (Fastest)
+
+Copy everything above
+
+Paste into Google Docs
+
+File → Download → PDF
+
+Option 2 (Professional)
+
+I can:
+
+Reformat this into a clean interview handbook layout
+
+Add diagrams
+
+Add execution plan visuals
+
+Add performance comparison charts
+
+Make it 25–30 page FAANG-style prep PDF
+
+If you want, say:
+
+"Generate professional formatted FAANG SQL prep PDF version"
+
+And I’ll produce a properly structured version ready for export.
